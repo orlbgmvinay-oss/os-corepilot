@@ -53,3 +53,21 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# CorePilot specific files
+
+# Generated logs
+logs/*
+!logs/.gitkeep
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# VS Code settings
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
