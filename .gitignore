@@ -71,3 +71,12 @@ logs/*
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Generated test executables
+test_ipc
+test_logger
+test_worker
+test_resource_limits
+
+# Generated main executable
+campus_compute
