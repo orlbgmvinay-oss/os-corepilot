@@ -7,23 +7,20 @@
 #include <fcntl.h>
 #include <errno.h>
 
-// ==========================================
-// Demonstrate Process Resource Limits
-// ==========================================
-
 int resource_limit_demo(void)
 {
-    struct rlimit limit;
     struct rlimit old_limit;
+    struct rlimit new_limit;
 
-    int fd;
+    int opened_fds[32];
     int count = 0;
+    int result = 0;
 
     printf("\n====================================\n");
     printf("     RESOURCE LIMIT DEMONSTRATION\n");
     printf("====================================\n");
 
-    // Get the current file descriptor limit
+    // Get original resource limit
     if (getrlimit(RLIMIT_NOFILE, &old_limit) == -1)
     {
         perror("getrlimit failed");
@@ -36,26 +33,27 @@ int resource_limit_demo(void)
     printf("Original hard limit: %ld\n",
            (long)old_limit.rlim_max);
 
-    // Set a new resource limit
-    limit.rlim_cur = 32;
+    // Set new soft limit without changing hard limit
+    new_limit = old_limit;
 
-    // Never increase the existing hard limit
-    limit.rlim_max = old_limit.rlim_max;
+    if (new_limit.rlim_cur > 32)
+        new_limit.rlim_cur = 32;
 
-    if (setrlimit(RLIMIT_NOFILE, &limit) == -1)
+    if (setrlimit(RLIMIT_NOFILE, &new_limit) == -1)
     {
         perror("setrlimit failed");
         return -1;
     }
 
-    printf("\nNew file descriptor limit applied: 32\n");
+    printf("\nNew file descriptor limit: %ld\n",
+           (long)new_limit.rlim_cur);
 
-    // Open files until the resource limit is reached
+    // Open files until the limit is reached
     printf("\nAttempting to open files...\n");
 
-    while (1)
+    while (count < 32)
     {
-        fd = open("/dev/null", O_RDONLY);
+        int fd = open("/dev/null", O_RDONLY);
 
         if (fd == -1)
         {
@@ -63,35 +61,30 @@ int resource_limit_demo(void)
             {
                 printf("\nResource limit reached!\n");
                 printf("Error: Too many open files.\n");
-                break;
             }
-
-            perror("open failed");
-
-            // Close already opened descriptors
-            for (int i = 0; i < count; i++)
+            else
             {
-                // Handled separately below
+                perror("open failed");
+                result = -1;
             }
 
-            return -1;
+            break;
         }
 
-        count++;
+        opened_fds[count++] = fd;
 
         printf("File descriptor opened: %d\n", fd);
     }
 
     printf("\nTotal additional files opened: %d\n", count);
 
-    // Close the opened file descriptors
-    // Standard descriptors 0, 1 and 2 are preserved.
-    for (int fd_to_close = 3; fd_to_close < 32; fd_to_close++)
+    // Close only descriptors opened by this function
+    for (int i = 0; i < count; i++)
     {
-        close(fd_to_close);
+        close(opened_fds[i]);
     }
 
-    // Restore the original resource limit
+    // Restore original resource limit
     if (setrlimit(RLIMIT_NOFILE, &old_limit) == -1)
     {
         perror("Failed to restore resource limit");
@@ -99,8 +92,7 @@ int resource_limit_demo(void)
     }
 
     printf("\nOriginal resource limit restored.\n");
-
     printf("====================================\n");
 
-    return 0;
+    return result;
 }
