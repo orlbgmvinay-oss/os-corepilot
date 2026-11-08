@@ -1,3 +1,7 @@
+# ==========================================
+# CorePilot - CampusCompute OS Project
+# ==========================================
+
 # Prerequisites
 *.d
 
@@ -12,7 +16,7 @@
 *.map
 *.exp
 
-# Precompiled Headers
+# Precompiled headers
 *.gch
 *.pch
 
@@ -22,7 +26,7 @@
 *.la
 *.lo
 
-# Shared objects (inc. Windows DLLs)
+# Shared libraries
 *.dll
 *.so
 *.so.*
@@ -36,13 +40,23 @@
 *.x86_64
 *.hex
 
+# Generated project executables
+campus_compute
+test_ipc
+test_logger
+test_worker
+test_resource_limits
+test_scheduler
+test_banker
+
 # Debug files
 *.dSYM/
 *.su
 *.idb
 *.pdb
+*.dwo
 
-# Kernel Module Compile Results
+# Kernel module compile results
 *.mod*
 *.cmd
 .tmp_versions/
@@ -51,32 +65,32 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# debug information files
-*.dwo
+# ==========================================
+# Logs
+# ==========================================
 
-# CorePilot specific files
-
-# Generated logs
 logs/*
 !logs/.gitkeep
 
+# ==========================================
 # Temporary files
+# ==========================================
+
 *.tmp
 *.swp
 *~
 
-# VS Code settings
-.vscode/
+# ==========================================
+# IDE settings
+# ==========================================
 
+.vscode/
+.idea/
+
+# ==========================================
 # Operating system files
+# ==========================================
+
 .DS_Store
 Thumbs.db
-
-# Generated test executables
-test_ipc
-test_logger
-test_worker
-test_resource_limits
-
-# Generated main executable
-campus_compute
+Desktop.ini
