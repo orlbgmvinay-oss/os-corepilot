@@ -1,7 +1,7 @@
 #include "resource_limits.h"
 #include <stdio.h>
 
-int main()
+int main(void)
 {
     printf("Starting Resource Limit Test...\n");
 
