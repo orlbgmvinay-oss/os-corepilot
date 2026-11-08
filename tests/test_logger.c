@@ -31,7 +31,7 @@ void *producer(void *arg)
 }
 
 
-int main()
+int main(void)
 {
     Logger logger;
 

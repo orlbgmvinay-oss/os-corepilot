@@ -77,6 +77,10 @@ test_ipc
 test_logger
 test_worker
 test_resource_limits
+tests/test_banker
+tests/test_scheduler
 
 # Generated main executable
 campus_compute
+tests/test_job
+tests/test_job
