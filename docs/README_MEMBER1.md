@@ -1,11 +1,13 @@
 # CampusCompute – Member 1 modules (FR1, FR2, FR5)
 
-This folder contains a working implementation of:
-- FR1: Job management (`job.c`, `job.h`)
-- FR2: FCFS, Round Robin, and non-preemptive Priority scheduling (`scheduler.c`, `scheduler.h`)
-- FR5: Banker's safety algorithm (`banker.c`, `banker.h`)
+The implementation is organized into `src/` and `include/`:
+- FR1: Job management (`src/job.c`, `include/job.h`)
+- FR2: FCFS, Round Robin, and non-preemptive Priority scheduling (`src/scheduler.c`, `include/scheduler.h`)
+- FR5: Banker's safety algorithm (`src/banker.c`, `include/banker.h`)
 
 ## Build and run on Linux / Ubuntu / WSL
+
+From the repository root:
 
 ```bash
 make
@@ -29,7 +31,7 @@ make clean
 
 ## Integration into the team's application
 
-Copy `job.c/.h`, `scheduler.c/.h`, and `banker.c/.h` into the main project. Compile them with the team's `main.c` and other modules. Include the relevant headers in `main.c`.
+Compile `src/job.c`, `src/scheduler.c`, and `src/banker.c` with the team's `main.c` and other modules, and add `include/` to the header search path. Include the relevant headers in `main.c`.
 
 Useful functions:
 
