@@ -21,8 +21,20 @@ static int run_scheduling(void)
         !add_job(jobs, &count, "J4", 3, 4, 2))
         return 1;
 
+    printf("\n=== Initial Job List ===\n");
     display_jobs(jobs, count);
+
     compare_schedulers(jobs, count, 2);
+
+    for (int i = 0; i < count; i++)
+    {
+        if (!update_job_status(jobs, count, jobs[i].id, JOB_COMPLETED))
+            return 1;
+    }
+
+    printf("\n=== Final Job Status ===\n");
+    display_jobs(jobs, count);
+
     return 0;
 }
 
@@ -64,13 +76,42 @@ static int run_logger_demo(void)
         return 1;
     }
 
-    int result = logger_log(&logger, "CorePilot logger demonstration");
-    logger_destroy(&logger);
-    if (result != 0)
+    printf("\n=== CorePilot Producer-Consumer Logger ===\n");
+
+    const int producer_count = 3;
+    const int messages_per_producer = 5;
+
+    for (int p = 1; p <= producer_count; p++)
     {
-        fprintf(stderr, "Could not enqueue the logger demonstration event.\n");
-        return 1;
+        for (int m = 1; m <= messages_per_producer; m++)
+        {
+            char message[LOGGER_MESSAGE_SIZE];
+
+            snprintf(message, sizeof(message),
+                     "Producer %d: Log message %d",
+                     p, m);
+
+            if (logger_log(&logger, message) != 0)
+            {
+                fprintf(stderr, "Failed to enqueue message.\n");
+                logger_destroy(&logger);
+                return 1;
+            }
+
+            printf("Produced: %s\n", message);
+        }
     }
+
+    logger_stop(&logger);
+
+    printf("\nProducer wait count: %d\n", logger.producer_waits);
+    printf("Consumer wait count: %d\n", logger.consumer_waits);
+
+    logger_destroy(&logger);
+
+    printf("\nLogger stopped successfully.\n");
+    printf("Log file: logs/campus.log\n");
+
     return 0;
 }
 

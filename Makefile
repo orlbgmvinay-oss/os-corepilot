@@ -12,14 +12,18 @@ SOURCES = src/main.o src/common.o src/banker.o src/ipc.o src/job.o src/logger.o 
 campus_compute: $(SOURCES)
 	$(CC) $(CFLAGS) $(THREAD_FLAGS) -o $@ $^
 
-test: tests/test_banker test_ipc test_logger test_resource_limits \
-	tests/test_scheduler test_worker
+test: tests/test_job tests/test_banker test_ipc test_logger test_resource_limits \
+        tests/test_scheduler test_worker
+	./tests/test_job
 	./tests/test_banker
 	./test_ipc
 	./test_logger
 	./test_resource_limits
 	./tests/test_scheduler
 	./test_worker
+
+tests/test_job: tests/test_job.c src/job.c include/job.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ tests/test_job.c src/job.c
 
 tests/test_banker: tests/test_banker.c src/banker.c include/banker.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ tests/test_banker.c src/banker.c
@@ -51,5 +55,5 @@ src/resource_limits.o: src/resource_limits.c include/resource_limits.h
 src/worker.o: src/worker.c include/worker.h
 
 clean:
-	rm -f src/*.o campus_compute tests/test_banker tests/test_scheduler \
-		test_ipc test_logger test_resource_limits test_worker logs/campus.log
+	rm -f src/*.o campus_compute tests/test_job tests/test_banker tests/test_scheduler \
+		test_ipc test_logger test_resource_limits test_worker

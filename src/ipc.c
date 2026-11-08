@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include "ipc.h"
 
 #include <fcntl.h>
