@@ -14,6 +14,12 @@ make
 ./member1_demo
 ```
 
+Run the scheduling and Banker's algorithm tests:
+
+```bash
+make test
+```
+
 Clean build artifacts:
 
 ```bash
