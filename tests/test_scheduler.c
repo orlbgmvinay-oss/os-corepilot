@@ -58,6 +58,17 @@ int main(void)
     CHECK(add_job(jobs, &count, "B", 0, 4, 1) == 1);
     CHECK(add_job(jobs, &count, "C", 2, 1, 3) == 1);
     CHECK(find_job(jobs, count, "B") == 1);
+    CHECK(jobs[0].status == JOB_WAITING);
+    CHECK(update_job_status(jobs, count, "A", JOB_WAITING) == 1);
+    CHECK(update_job_status(jobs, count, "A", JOB_COMPLETED) == 0);
+    CHECK(jobs[0].status == JOB_WAITING);
+    CHECK(update_job_status(jobs, count, "A", JOB_RUNNING) == 1);
+    CHECK(update_job_status(jobs, count, "A", JOB_WAITING) == 0);
+    CHECK(update_job_status(jobs, count, "A", JOB_COMPLETED) == 1);
+    CHECK(jobs[0].status == JOB_COMPLETED);
+    CHECK(update_job_status(jobs, count, "A", JOB_RUNNING) == 0);
+    CHECK(update_job_status(jobs, count, "missing", JOB_RUNNING) == 0);
+    CHECK(update_job_status(jobs, count, "A", (JobStatus)99) == 0);
 
     capture_output(run_fcfs, jobs, count, output, sizeof(output));
     CHECK(strstr(output, "[B: 0-4] [A: 4-7] [C: 7-8]") != NULL);

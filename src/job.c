@@ -54,7 +54,22 @@ void display_jobs(const Job jobs[], int count) {
 
 int update_job_status(Job jobs[], int count, const char *id, JobStatus status) {
     int index = find_job(jobs, count, id);
-    if (index < 0 || status < JOB_WAITING || status > JOB_COMPLETED) return 0;
-    jobs[index].status = status;
-    return 1;
+
+    if (index < 0 || status < JOB_WAITING || status > JOB_COMPLETED)
+        return 0;
+
+    JobStatus current = jobs[index].status;
+
+    /* Allow an unchanged status. */
+    if (current == status)
+        return 1;
+
+    /* Only allow forward lifecycle transitions. */
+    if ((current == JOB_WAITING && status == JOB_RUNNING) ||
+        (current == JOB_RUNNING && status == JOB_COMPLETED)) {
+        jobs[index].status = status;
+        return 1;
+    }
+
+    return 0;
 }

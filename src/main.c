@@ -7,8 +7,12 @@
 #include "scheduler.h"
 #include "worker.h"
 
+#include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 static int run_scheduling(void)
 {
@@ -29,22 +33,88 @@ static int run_scheduling(void)
 static int run_ipc_demo(void)
 {
     IPCContext sender;
-    IPCContext receiver;
 
+    // Parent creates shared memory and semaphore.
     if (ipc_create(&sender) != 0)
-        return 1;
-
-    if (ipc_open(&receiver) != 0)
     {
+        fprintf(stderr, "Parent: IPC creation failed.\n");
+        return 1;
+    }
+
+    fflush(stdout);
+    pid_t pid = fork();
+
+    if (pid < 0)
+    {
+        perror("fork failed");
         ipc_cleanup(&sender);
         return 1;
     }
 
-    int result = ipc_send(&sender, "Hello from CorePilot") == 0 &&
-                 ipc_receive(&receiver) == 0 ? 0 : 1;
-    ipc_close(&receiver);
+    if (pid == 0)
+    {
+        // Child process.
+        IPCContext receiver;
+
+        printf("\n[Child] Process started. PID: %ld\n",
+               (long)getpid());
+
+        if (ipc_open(&receiver) != 0)
+        {
+            fprintf(stderr, "[Child] IPC open failed.\n");
+            _exit(1);
+        }
+
+        int result = ipc_receive(&receiver);
+        ipc_close(&receiver);
+
+        printf("[Child] Process finished.\n");
+        fflush(stdout);
+        _exit(result == 0 ? 0 : 1);
+    }
+
+    // Parent process.
+    printf("\n[Parent] Child created. PID: %ld\n", (long)pid);
+
+    int send_result = ipc_send(&sender, "Hello from CorePilot");
+
+    if (send_result != 0)
+    {
+        fprintf(stderr, "[Parent] Message sending failed.\n");
+        kill(pid, SIGTERM);
+    }
+
+    int status;
+    pid_t waited;
+
+    do
+    {
+        waited = waitpid(pid, &status, 0);
+    }
+    while (waited == -1 && errno == EINTR);
+
+    if (waited == -1)
+    {
+        perror("waitpid failed");
+        ipc_cleanup(&sender);
+        return 1;
+    }
+
     ipc_cleanup(&sender);
-    return result;
+
+    if (send_result != 0)
+        return 1;
+
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+    {
+        fprintf(stderr, "[Parent] Child process failed.\n");
+        return 1;
+    }
+
+    printf("[Parent] Child completed successfully.\n");
+    printf("[Parent] IPC resources cleaned up.\n");
+
+    return 0;
 }
 
 static int run_logger_demo(void)
