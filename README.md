@@ -1,239 +1,85 @@
-# CampusCompute
-### Intelligent Job Scheduling and Resource Management
+# CampusCompute — Intelligent Job Scheduling and Resource Management
 
-CampusCompute is a command-line Operating Systems mini-project developed using **C on Linux/Ubuntu (WSL)**.
+Command-line prototype (C, Linux/Ubuntu/WSL) for the OS Level 3 mini-project.
+Every result is computed by the code at run time from input files in `tests/`.
 
-It demonstrates fundamental operating-system concepts through CPU scheduling, process management, concurrent logging, inter-process communication, resource-safety analysis, worker-failure detection, and resource-limit management.
+## Prerequisites
+Ubuntu or WSL Ubuntu with `gcc` and `make` (`sudo apt install build-essential`).
 
----
+## Build
+```
+make            # builds ./campuscompute  (flags: -Wall -Wextra, no warnings)
+make clean      # removes build/ and the binary, plus this program's own IPC objects
+```
+Manual build (no make): `gcc -std=gnu11 -Wall -Wextra -O2 -pthread -Iinclude src/*.c -o campuscompute -pthread -lrt -lm`
 
-## 1. Project Overview
-
-In a shared computing environment, multiple processes compete for CPU time and system resources.
-
-CampusCompute demonstrates how an operating system can manage these processes through scheduling algorithms, synchronization mechanisms, inter-process communication, and resource-management techniques.
-
-## 2. Technologies Used
-
-| Technology | Purpose |
+## Commands
+| Command | Feature |
 |---|---|
-| C | Core programming language |
-| Linux / Ubuntu / WSL | Execution environment |
-| GCC | C compiler |
-| GNU Make | Build automation |
-| POSIX Threads | Concurrent logging |
-| Mutexes and Condition Variables | Thread synchronization |
-| `fork()` and `waitpid()` | Process management |
-| POSIX Shared Memory | Inter-process communication |
-| POSIX Named Semaphores | Process synchronization |
-| Banker's Algorithm | Resource-safety analysis |
-| `getrlimit()` and `setrlimit()` | Resource-limit management |
-| Git and GitHub | Version control and collaboration |
+| `./campuscompute help` | usage (FR8) |
+| `./campuscompute sched fcfs\|rr\|priority <jobfile> [--quantum N] [--aging N]` | FR1, FR2 |
+| `./campuscompute sched compare <jobfile> [--quantum N] [--aging N]` | same job set, all policies |
+| `./campuscompute logger [--producers P] [--consumers C] [--items N] [--capacity K]` | FR3 |
+| `./campuscompute ipc [jobfile] [--policy fcfs\|rr\|priority] [--quantum N]` | FR4 |
+| `./campuscompute banker <statefile>` | FR5 |
+| `./campuscompute worker normal\|fail\|crash\|hang\|mix [--timeout S]` | FR6 |
+| `./campuscompute rlimit nofile\|mem\|cpu\|all` | FR7 |
+| `./campuscompute demo [jobfile]` | integrated run + summary |
+| `./campuscompute cleanup [--logs]` | remove this program's IPC objects (and optionally its log) |
+| `./campuscompute gen <count> <seed> <outfile>` | reproducible random job file |
 
-## 3. Functional Requirements
+Invalid commands, options, or malformed input print an error and usage, and exit with status 2.
 
-| ID | Module | Implementation |
-|---|---|---|
-| FR1 | Job Management | Job creation, validation, and lifecycle status |
-| FR2 | CPU Scheduling | FCFS, Round Robin, and Non-preemptive Priority |
-| FR3 | Concurrent Logger | Bounded producer-consumer queue using pthreads |
-| FR4 | Inter-Process Communication | POSIX shared memory and named semaphore |
-| FR5 | Resource Safety | Banker's safety algorithm |
-| FR6 | Worker Management | Child-process creation and failure detection |
-| FR7 | Resource Limits | File descriptor limit demonstration and cleanup |
-| FR8 | Command-Line Interface | Feature commands and invalid-command handling |
+## Rules stated by the program
+* **FCFS:** equal arrival -> lower job ID first.
+* **Round Robin:** default quantum 3 (`--quantum`). A job arriving exactly when a slice ends joins the queue *before* the pre-empted job.
+* **Priority (non-preemptive):** lower number = more urgent; ties -> earlier arrival, then lower job ID.
+  Optional `--aging N` improves a waiting job's effective priority by 1 per N time units (starvation guard).
+* **Banker's:** Need = Max - Allocation; scan P0..Pn-1 and pick the first unfinished process with Need <= Work.
 
-All seven test modules have passed, and the integrated application has been built and tested.
+## Input formats
+* Jobs (`tests/jobs_*.txt`): `id name arrival burst priority`, `#` comments.
+* Banker (`tests/banker_*.txt`): keywords `processes`, `resources`, `names`, `available`, `max`, `allocation`, optional `request <pid> v1..vM`.
 
-## 4. Project Structure
+## Beyond the brief
+Priority aging; Banker's resource-request check (grant/deny with rollback); per-policy CPU utilisation,
+throughput and context-switch counts; worker watchdog that kills a simulated hang; three rlimit
+experiments (open files, address space, CPU time); reproducible job generator; one shared log for all modules.
 
-```text
-CampusCompute/
-│
-├── include/
-│   ├── common.h
-│   ├── job.h
-│   ├── scheduler.h
-│   ├── banker.h
-│   ├── logger.h
-│   ├── ipc.h
-│   ├── worker.h
-│   └── resource_limits.h
-│
-├── src/
-│   ├── main.c
-│   ├── common.c
-│   ├── job.c
-│   ├── scheduler.c
-│   ├── banker.c
-│   ├── logger.c
-│   ├── ipc.c
-│   ├── worker.c
-│   └── resource_limits.c
-│
-├── tests/
-│   ├── test_job.c
-│   ├── test_scheduler.c
-│   ├── test_banker.c
-│   ├── test_logger.c
-│   ├── test_ipc.c
-│   ├── test_worker.c
-│   └── test_resource_limits.c
-│
-├── docs/
-│   └── architecture.md
-│
-├── logs/
-│   └── .gitkeep
-│
-├── Makefile
-├── README.md
-├── LICENSE
-└── .gitignore
-```
+## Clean-up and safety
+Only these POSIX objects are ever created or removed: `/campuscompute_shm`, `/campuscompute_req`,
+`/campuscompute_ack` (visible in `/dev/shm`), plus `logs/campuscompute.log`. All simulated failures are labelled
+`SIMULATED`. Check manually: `ls /dev/shm | grep campuscompute` (should print nothing) and `ps -ef | grep campuscompute`.
 
-## 5. Prerequisites
+## Tests
+`make test` (or `bash tests/run_tests.sh`) runs every command, including invalid ones, and checks exit codes and key output.
 
-Required environment:
+## Screenshot guide (S01-S24)
+Set the prompt first: `export SRN='YOUR_FULL_SRN'; export PS1='[$SRN] \w\$ '`
 
-- Ubuntu / Linux / WSL Ubuntu
-- GCC compiler
-- GNU Make
-- POSIX-compatible environment
-
-Install development tools:
-
-```bash
-sudo apt update
-sudo apt install build-essential gcc make
-```
-
-Verify installation:
-
-```bash
-gcc --version
-make --version
-```
-
-## 6. Compilation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/orlbgmvinay-oss/os-corepilot.git
-```
-
-Navigate into the project:
-
-```bash
-cd os-corepilot
-```
-
-Compile the application:
-
-```bash
-make
-```
-
-## 7. Running the Application
-
-General command:
-
-```bash
-./campus_compute <feature>
-```
-
-Available features:
-
-| Feature | Command |
+| # | Command |
 |---|---|
-| CPU Scheduling | `./campus_compute scheduling` |
-| Banker's Algorithm | `./campus_compute banker` |
-| Concurrent Logger | `./campus_compute logger` |
-| Inter-Process Communication | `./campus_compute ipc` |
-| Worker Management | `./campus_compute worker` |
-| Resource Limits | `./campus_compute resource-limits` |
-
-Display available commands:
-
-```bash
-./campus_compute
-```
-
-Test invalid command handling:
-
-```bash
-./campus_compute invalid
-```
-
-## 8. Running Tests
-
-Execute all seven test modules:
-
-```bash
-make test
-```
-
-The test suite covers:
-
-1. Job management and validation.
-2. Banker's safety algorithm.
-3. Shared-memory IPC.
-4. Concurrent producer-consumer logger.
-5. Resource-limit management.
-6. CPU scheduling algorithms.
-7. Worker-process management.
-
-## 9. Generated Logs
-
-The concurrent logger generates event entries in:
-
-```text
-logs/campus.log
-```
-
-Display the log:
-
-```bash
-cat logs/campus.log
-```
-
-Count the generated entries:
-
-```bash
-wc -l logs/campus.log
-```
-
-## 10. Cleanup
-
-Remove generated object files, executables, test binaries, and generated application logs:
-
-```bash
-make clean
-```
-
-Rebuild the application:
-
-```bash
-make
-```
-
-## 11. Team Contributions
-
-This project is developed collaboratively by a two-member team.
-
-| Member | Responsibilities |
-|---|---|
-| Member 1 | Job Management, CPU Scheduling, Banker's Algorithm |
-| Member 2 | Concurrent Logger, IPC, Worker Failure Detection, Resource Limits |
-| Both Members | Integration, CLI, testing, documentation, and debugging |
-
-## 12. Version Control
-
-Git and GitHub are used for collaborative development.
-
-Development work is organized using feature branches and integrated into the main branch through Pull Requests.
-
-## 13. Project Objective
-
-The objective of CampusCompute is to demonstrate practical implementation of operating-system concepts through modular C programs, with emphasis on process scheduling, synchronization, inter-process communication, and resource management.
+| S01 | `pwd; uname -a; cat /etc/os-release \| head -3` |
+| S02 | `gcc --version; make --version` |
+| S03 | `ls -R include src tests Makefile README.md` |
+| S04 | `make clean && make` |
+| S05 | `./campuscompute help` |
+| S06 | `./campuscompute sched fcfs tests/jobs_basic.txt` |
+| S07 | `./campuscompute sched rr tests/jobs_basic.txt --quantum 3` |
+| S08 | `./campuscompute sched priority tests/jobs_basic.txt` (and `--aging 2`) |
+| S09 | `./campuscompute sched compare tests/jobs_basic.txt --aging 2` |
+| S10 | `./campuscompute logger` |
+| S11 | `./campuscompute logger --producers 4 --consumers 1 --capacity 1 --items 6` |
+| S12 | `./campuscompute ipc` (top part) |
+| S13 | `./campuscompute ipc` (cleanup part); then `ls /dev/shm` |
+| S14 | `./campuscompute banker tests/banker_safe.txt` |
+| S15 | `./campuscompute banker tests/banker_unsafe.txt` |
+| S16 | `./campuscompute worker normal` |
+| S17 | `./campuscompute worker fail` (also `worker mix`) |
+| S18 | `./campuscompute rlimit` |
+| S19 | `./campuscompute bogus` and `./campuscompute sched fcfs tests/jobs_bad_format.txt` |
+| S20 | `./campuscompute cleanup; ls /dev/shm; ps -ef \| grep campuscompute` |
+| S21 | `./campuscompute demo` (summary at the end) |
+| S22 | `ls -l logs; head -20 logs/campuscompute.log` |
+| S23 | `ls -l campuscompute Makefile src include` |
+| S24 | `zip -r ... ; unzip -l ... ; unzip -t ...` |

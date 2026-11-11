@@ -1,0 +1,3 @@
+# malformed on purpose: line 2 has only 3 fields
+1 ok-job 0 5 1
+2 broken 3

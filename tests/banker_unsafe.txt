@@ -1,0 +1,15 @@
+# Only P3 can finish; afterwards P0, P1 and P2 are all stuck -> UNSAFE
+processes 4
+resources 3
+names GPU MEM LIC
+available 1 1 0
+max
+4 2 2
+2 2 2
+3 2 2
+0 2 1
+allocation
+2 0 1
+1 1 0
+1 1 1
+0 1 1

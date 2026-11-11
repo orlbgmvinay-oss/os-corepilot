@@ -1,17 +1,12 @@
-#ifndef WORKER_H
-#define WORKER_H
+/* worker.h - FR6: worker processes, failure detection and a watchdog. */
+#ifndef CAMPUS_WORKER_H
+#define CAMPUS_WORKER_H
 
-#include <sys/types.h>
+/* Spawns workers for `mode` ("normal", "fail", "crash", "hang" or "mix"),
+ * supervises them with fork()/waitpid() and prints a report. Returns 1 when
+ * every observed outcome matches what was injected, 0 otherwise. */
+int worker_scenario(const char *mode, int timeout_seconds, int verbose);
 
-// Worker execution modes
-#define WORKER_NORMAL 0
-#define WORKER_FAILURE 1
+int run_worker_cmd(int argc, char **argv);
 
-// Function declarations
-pid_t worker_create(int mode);
-
-int worker_wait(pid_t pid);
-
-void worker_run(int mode);
-
-#endif
+#endif /* CAMPUS_WORKER_H */

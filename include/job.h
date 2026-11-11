@@ -1,29 +1,45 @@
+/*
+ * job.h - FR1: job representation, validation and lifecycle state.
+ */
 #ifndef JOB_H
 #define JOB_H
 
-#define MAX_JOBS 100
-#define JOB_ID_LEN 32
+#include "common.h"
 
-typedef enum {
-    JOB_WAITING = 0,
-    JOB_RUNNING,
-    JOB_COMPLETED
-} JobStatus;
+/* Lifecycle: NEW -> READY (arrived) -> RUNNING -> DONE */
+typedef enum { JOB_NEW, JOB_READY, JOB_RUNNING, JOB_DONE } JobStatus;
 
 typedef struct {
-    char id[JOB_ID_LEN];
-    int arrival_time;
-    int cpu_burst;
-    int priority;       /* Smaller number means higher priority. */
+    int  id;
+    char name[24];
+    int  arrival;      /* time the job enters the system            */
+    int  burst;        /* total CPU time required                   */
+    int  priority;     /* 1 = most urgent ... 99 = least urgent     */
     JobStatus status;
+
+    /* filled in by the simulators */
+    int remaining;
+    int first_start;   /* first time the job got the CPU            */
+    int completion;
+    int turnaround;
+    int waiting;
+    int response;
 } Job;
 
-/* Returns 1 on success, 0 if invalid/full/duplicate. */
-int add_job(Job jobs[], int *count, const char *id,
-            int arrival_time, int cpu_burst, int priority);
-void display_jobs(const Job jobs[], int count);
-int update_job_status(Job jobs[], int count, const char *id, JobStatus status);
-int find_job(const Job jobs[], int count, const char *id);
-const char *job_status_string(JobStatus status);
+typedef struct {
+    Job jobs[MAX_JOBS];
+    int count;
+} JobSet;
 
-#endif
+/* Load and validate a job file. Returns 0, or -1 with a message in err. */
+int  job_load(const char *path, JobSet *js, char *err, size_t errlen);
+/* Convenience wrapper: prints "error: ..." itself and returns -1 on failure. */
+int  jobset_load(const char *path, JobSet *js);
+void job_reset_runtime(Job *j);
+const char *job_status_str(JobStatus s);
+void job_print_input(const JobSet *js, const char *path);
+
+/* `gen <count> <seed> <outfile>` - write a reproducible random job file. */
+int  run_gen(int argc, char **argv);
+
+#endif /* JOB_H */

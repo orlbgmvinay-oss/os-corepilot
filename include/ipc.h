@@ -1,48 +1,20 @@
-#ifndef IPC_H
-#define IPC_H
+/* ipc.h - FR4: POSIX shared memory + named semaphores between two processes. */
+#ifndef CAMPUS_IPC_H
+#define CAMPUS_IPC_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <semaphore.h>
-#include <stdbool.h>
+#include "scheduler.h"
 
-#define SHM_NAME "/campus_compute_shm"
-#define SEM_NAME "/campus_compute_sem"
+/* Runs the controller/reporter exchange. Returns 1 on success, 0 on failure.
+ * All IPC objects created are removed before returning, even on errors. */
+int ipc_demo(const char *jobfile, Policy policy, int quantum, int verbose);
 
-#define IPC_MESSAGE_SIZE 256
+/* Removes ONLY the objects this program creates (SHM_NAME, SEM_REQ_NAME,
+ * SEM_ACK_NAME). Returns how many existed and were removed. */
+int ipc_unlink_all(int verbose);
 
-typedef struct
-{
-    char message[IPC_MESSAGE_SIZE];
+/* Reports (and returns) how many of the program's IPC objects still exist. */
+int ipc_objects_present(int verbose);
 
-} IPCSharedData;
+int run_ipc_cmd(int argc, char **argv);
 
-typedef struct
-{
-    int shm_fd;
-
-    IPCSharedData *shared_data;
-
-    sem_t *semaphore;
-
-    bool creator;
-
-} IPCContext;
-
-
-// IPC function declarations
-
-int ipc_create(IPCContext *context);
-
-int ipc_open(IPCContext *context);
-
-int ipc_send(IPCContext *context, const char *message);
-
-int ipc_receive(IPCContext *context);
-
-void ipc_close(IPCContext *context);
-
-void ipc_cleanup(IPCContext *context);
-
-#endif
+#endif /* CAMPUS_IPC_H */

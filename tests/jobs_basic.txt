@@ -1,0 +1,8 @@
+# CampusCompute sample workload
+# id name arrival burst priority      (priority 1 = most urgent)
+1 matlab-sim    0  8 3
+2 cfd-solver    1  4 1
+3 ml-train      2  9 4
+4 thesis-latex  3  5 2
+5 gene-align    3  2 1
+6 render-farm   6  6 2

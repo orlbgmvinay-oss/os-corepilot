@@ -84,3 +84,7 @@ tests/test_scheduler
 campus_compute
 tests/test_job
 tests/test_job
+
+# Build artifacts
+build/
+campuscompute
